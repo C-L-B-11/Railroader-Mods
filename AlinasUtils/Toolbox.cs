@@ -8,8 +8,8 @@ using Game;
 using Game.Messages;
 using Game.Progression;
 using Game.State;
-using HarmonyLib;
-using Model.OpsNew;
+using KeyValue.Runtime;
+using Model.Ops;
 using Track;
 using UI;
 using UI.Builder;
@@ -19,39 +19,40 @@ using UnityEngine.UI;
 
 namespace AlinasUtils;
 
-class Toolbox
+class Toolbox : IDisposable
 {
-  private Window window;
+  private CTCDialog ctcDialog;
+  private Button button;
   public Toolbox()
   {
 
   }
 
+  public void Dispose()
+  {
+    GameObject.Destroy(button);
+    var window = WindowManager.Shared.GetWindow<ToolboxWindow>();
+    if (window == null) return;
+    window.Close();
+    window.enabled = false;
+  }
+
   public void Init()
   {
-    if (window != null)
-    {
-      window.CloseWindow();
-      UnityEngine.Object.Destroy(window.gameObject);
-    }
-    var helper = AlinasUtilsPlugin.Shared.UIHelper;
-    window = helper.CreateWindow(400, 600, Window.Position.UpperRight);
-    var rectTransformProp = AccessTools.Property(typeof(Window), "RectTransform");
-    var rectTransform = rectTransformProp.GetValue(window) as RectTransform;
-    rectTransform.position -= new Vector3(0, 40, 0);
-    window.Title = "Toolbox";
-    helper.PopulateWindow(window, BuildWindow);
+    WindowHelper.CreateWindow<ToolboxWindow>(null);
+    WindowHelper.CreateWindow<CTCDialog>(null);
 
     var tr = UnityEngine.Object.FindObjectOfType<TopRightArea>();
-    if (tr != null)
-    {
-      var buttons = tr.transform.Find("Buttons");
+    if (tr != null) {
+      var buttons = tr.transform.Find("Strip");
       var go = new GameObject("AlinasUtilsButton");
       go.transform.parent = buttons;
-      var button = go.AddComponent<Button>();
-      button.onClick.AddListener(() =>
-      {
-        window.ShowWindow();
+      go.transform.SetSiblingIndex(9);
+      button = go.AddComponent<Button>();
+      button.onClick.AddListener(() => {
+        //this.window.ShowWindow();
+        WindowManager.Shared.GetWindow<ToolboxWindow>().Show();
+        //window.Show();
       });
       var rawIcon = Assembly.GetExecutingAssembly().GetManifestResourceStream("AlinasUtils.Resources.toolbox-icon.png");
       var ms = new System.IO.MemoryStream();
@@ -68,26 +69,21 @@ class Toolbox
 
   private void BuildWindow(UIPanelBuilder builder)
   {
-    if (StateManager.IsHost)
-    {
+    if (StateManager.IsHost) {
       var setGamemode = (GameMode mode) =>
         StateManager.ApplyLocal(new PropertyChange("_game", "mode", new IntPropertyValue((int)mode)));
-      builder.AddSection("Gamemode", gmBuilder =>
-      {
-        gmBuilder.HStack(b =>
-        {
+      builder.AddSection("Gamemode", gmBuilder => {
+        gmBuilder.HStack(b => {
           b.AddField("Sandbox", b.AddToggle(() => StateManager.Shared.GameMode == GameMode.Sandbox, value => { setGamemode(value ? GameMode.Sandbox : GameMode.Company); }));
           b.AddField("Company", b.AddToggle(() => StateManager.Shared.GameMode == GameMode.Company, value => { setGamemode(value ? GameMode.Company : GameMode.Sandbox); }));
         });
       });
     }
     builder.AddSection("Sleep");
-    builder.HStack(b =>
-    {
+    builder.HStack(b => {
       var wait = (float hours) => StateManager.ApplyLocal(new WaitTime { Hours = hours });
       builder.AddButtonCompact("1 Hour", () => wait(1));
-      builder.AddButtonCompact("Night", () =>
-      {
+      builder.AddButtonCompact("Night", () => {
         var now = TimeWeather.Now.Hours;
         var tgt = StateManager.Shared.Storage.InterchangeServeHour;
         var diff = now < tgt ? tgt - now : 24 - now + tgt;
@@ -95,8 +91,7 @@ class Toolbox
       });
     });
     var areas = OpsController.Shared.Areas;
-    var spawnpoints = SpawnPoint.All.Where(sp =>
-    {
+    var spawnpoints = SpawnPoint.All.Where(sp => {
       var area = OpsController.Shared.ClosestAreaForGamePosition(sp.GamePositionRotation.Item1);
       return area.isActiveAndEnabled;
     });
@@ -107,31 +102,22 @@ class Toolbox
 
     var selectedIndex = 0;
 
-    builder.AddField("Teleport", builder.AddDropdown(teleports, selectedIndex, ind =>
-    {
+    builder.AddField("Teleport", builder.AddDropdown(teleports, selectedIndex, ind => {
       var sp = spawnpoints.ToArray()[ind - 1];
       selectedIndex = 0;
       CameraSelector.shared.JumpToPoint(sp.GamePositionRotation.Item1, sp.GamePositionRotation.Item2, null);
     }));
-    builder.AddSection("Progressions", pBuilder =>
-    {
-      pBuilder.VScrollView(sv =>
-      {
+    builder.AddSection("Progressions", pBuilder => {
+      pBuilder.VScrollView(sv => {
         sv.RebuildOnInterval(1);
         var sections = Progression.Shared?.Sections ?? [];
-        foreach (var section in sections.Where(s => s.Available || s.Unlocked).OrderBy(s => s.Available ? 0 : 1))
-        {
-          sv.AddField(section.displayName, sv.AddToggle(() => section.Unlocked, (value) =>
-          {
-            if (value)
-            {
-              while (!section.Unlocked)
-              {
+        foreach (var section in sections.Where(s => s.Available || s.Unlocked).OrderBy(s => s.Available ? 0 : 1)) {
+          sv.AddField(section.displayName, sv.AddToggle(() => section.Unlocked, (value) => {
+            if (value) {
+              while (!section.Unlocked) {
                 Progression.Shared.Advance(section);
               }
-            }
-            else
-            {
+            } else {
               Progression.Shared.Revert(section);
             }
             sv.Rebuild();
@@ -139,16 +125,22 @@ class Toolbox
         }
       });
     });
-    builder.AddButton("Rebuild Track", () =>
-    {
+    builder.AddButton("Rebuild Track", () => {
       TrackObjectManager.Instance.Rebuild();
+    });
+    builder.AddButton("Reset Derailments", () => {
+      var kv = StateManager.Shared.KeyValueObjectForId("_reputation");
+      if (kv == null) return;
+      kv["derailments"] = Value.Array([]);
+    });
+    builder.AddButton("CTC", () => {
+      ctcDialog.Show();
     });
   }
 
   private IEnumerator WaitForSections(UIPanelBuilder builder)
   {
-    while (Progression.Shared == null)
-    {
+    while (Progression.Shared == null) {
       yield return new WaitForSeconds(1);
     }
     builder.Rebuild();

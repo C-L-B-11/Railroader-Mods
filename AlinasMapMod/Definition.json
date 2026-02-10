@@ -2,17 +2,21 @@
   "manifestVersion": 5,
   "id": "AlinaNova21.AlinasMapMod",
   "name": "Alina's Map Mod",
-  "version": "$(AssemblyVersion)",
+  "version": "VERSION_PLACEHOLDER",
   "assemblies": [ "AlinasMapMod" ],
   "updateUrl": "https://railroader.alinanova.dev/update.json",
   "requires": [
     {
+      "id": "railroader",
+      "notBefore": "2024.6.10"
+    },
+    {
       "id": "railloader",
-      "notBefore": "1.8.0"
+      "notBefore": "1.10.0.2"
     },
     {
       "id": "Zamu.StrangeCustoms",
-      "notBefore": "1.6.24125.1439"
+      "notBefore": "1.10.25017.313"
     }
   ]
 }

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace MapEditor.Dialogs
 {
-  public sealed class KeyboardSettingsDialog() : DialogBase("Keyboard bindings", 400, 500, Window.Position.Center)
+  public sealed class KeyboardSettingsDialog() : DialogBase("keyboardbindings", "Keyboard bindings", 400, 500, Window.Position.Center)
   {
 
     private readonly Dictionary<string, TMP_Text> _Labels = new Dictionary<string, TMP_Text>();
@@ -19,8 +19,7 @@ namespace MapEditor.Dialogs
     private void BuildField(UIPanelBuilder builder, string label, KeyCode current, Action<KeyCode> onSelected)
     {
       _Bindings[label] = current;
-      var field = builder.AddField(label, builder.AddEnumDropdown(current, value =>
-      {
+      var field = builder.AddField(label, builder.AddEnumDropdown(current, value => {
         onSelected(value);
         _Bindings[label] = value;
         OnKeyBindingChanged();
@@ -38,8 +37,7 @@ namespace MapEditor.Dialogs
         .SelectMany(o => o, (_, o) => o.Key)
         .ToList();
 
-      foreach (var label in _Labels)
-      {
+      foreach (var label in _Labels) {
         label.Value!.color = duplicateBindings.Contains(label.Key) ? Color.yellow : Color.gray;
       }
 

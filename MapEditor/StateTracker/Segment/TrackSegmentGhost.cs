@@ -8,8 +8,8 @@ namespace MapEditor.StateTracker.Segment
   public sealed class TrackSegmentGhost(string id)
   {
 
-    private string _a = null!;
-    private string _b = null!;
+    internal string _a = null!;
+    internal string _b = null!;
     internal int _priority;
     internal int _speedLimit;
     internal string _groupId = null!;
@@ -48,18 +48,24 @@ namespace MapEditor.StateTracker.Segment
       segment.groupId = _groupId;
       segment.style = _style;
       segment.trackClass = _trackClass;
+      segment.GetComponentInChildren<TrackSegmentHelper>()?.Rebuild();
     }
 
     public void CreateSegment()
     {
-      var gameObject = new GameObject($"Segment {id}");
-      gameObject.SetActive(false);
-      var segment = gameObject.AddComponent<TrackSegment>();
-      segment.id = id;
+      var segment = Graph.Shared.AddSegment(id, Graph.Shared.GetNode(_a)!, Graph.Shared.GetNode(_b)!);
       segment.transform.SetParent(Graph.Shared.transform);
+      // var gameObject = new GameObject($"Segment {id}");
+      // gameObject.SetActive(false);
+      // var segment = gameObject.AddComponent<TrackSegment>();
+      // segment.id = id;
+      // segment.transform.SetParent(Graph.Shared.transform);
       UpdateSegment(segment);
-      gameObject.SetActive(true);
-      Graph.Shared.AddSegment(segment);
+      // gameObject.SetActive(true);
+      // Graph.Shared.AddSegment(segment);
+      Graph.Shared.OnNodeDidChange(segment.a);
+      Graph.Shared.OnNodeDidChange(segment.b);
+      TrackObjectManager.Instance.Rebuild();
       EditorContext.PatchEditor!.AddOrUpdateSegment(segment);
       EditorContext.AttachUiHelper(segment);
     }

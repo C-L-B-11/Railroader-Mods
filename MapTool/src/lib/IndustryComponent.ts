@@ -14,23 +14,27 @@ enum CarTypes {
 }
 
 export enum IndustryComponentType {
-  FormulaicIndustryComponent = "Model.OpsNew.FormulaicIndustryComponent",
-  IndustryLoader = "Model.OpsNew.IndustryLoader",
-  IndustryUnLoader = "Model.OpsNew.IndustryUnLoader",
-  Interchange = "Model.OpsNew.Interchange",
-  InterchangedIndustryLoader = "Model.OpsNew.InterchangedIndustryLoader",
-  ProgressionIndustryComponent = "Model.OpsNew.ProgressionIndustryComponent",
-  RepairTrack = "Model.OpsNew.RepairTrack",
-  TeamTrack = "Model.OpsNew.TeamTrack",
-  TeleportLoadingIndustry = "Model.OpsNew.TeleportLoadingIndustry",
+  FormulaicIndustryComponent = "Model.Ops.FormulaicIndustryComponent",
+  IndustryLoader = "Model.Ops.IndustryLoader",
+  IndustryUnLoader = "Model.Ops.IndustryUnLoader",
+  Interchange = "Model.Ops.Interchange",
+  InterchangedIndustryLoader = "Model.Ops.InterchangedIndustryLoader",
+  ProgressionIndustryComponent = "Model.Ops.ProgressionIndustryComponent",
+  RepairTrack = "Model.Ops.RepairTrack",
+  TeamTrack = "Model.Ops.TeamTrack",
+  TeleportLoadingIndustry = "Model.Ops.TeleportLoadingIndustry",
+  PaxStationComponent = "AlinasMapMod.PaxStationComponent",
 }
 
 export type Interchange = {
   type: IndustryComponentType.Interchange
+  name: string
 } & IndustryComponentBase
 
 export type InterchangedIndustryLoader = {
   type: IndustryComponentType.InterchangedIndustryLoader
+  name: string
+  loadId: Id<Load>
 } & IndustryComponentBase
 
 export type RepairTrack = {
@@ -72,6 +76,15 @@ export type _IndustryLoaderUnLoader = {
   orderAroundLoaded: boolean
 } & IndustryComponentBase
 
+export type PaxStationComponent = {
+  type: IndustryComponentType.PaxStationComponent
+  loadId: Id<Load>
+  basePopulation: number
+  timetableCode: string
+  neighborIds: string[]
+  branch: string
+} & IndustryComponentBase
+
 export interface IndustryComponentBase extends isDirty{
   name: string
   trackSpans: Id<TrackSpan>[]
@@ -85,19 +98,20 @@ export type IndustryComponent =
   | IndustryUnLoader
   | Interchange
   | InterchangedIndustryLoader
+  | PaxStationComponent
   | ProgressionIndustryComponent
   | RepairTrack
   | TeamTrack
   | TeleportLoadingIndustry
 
 export type IndustryComponentTypeMap<T> =
-  T extends "Model.OpsNew.FormulaicIndustryComponent" ? FormulaicIndustryComponent :
-  T extends "Model.OpsNew.IndustryLoader" ? IndustryLoader :
-  T extends "Model.OpsNew.IndustryUnLoader" ? IndustryUnLoader :
-  T extends "Model.OpsNew.Interchange" ? Interchange :
-  T extends "Model.OpsNew.InterchangedIndustryLoader" ? InterchangedIndustryLoader :
-  T extends "Model.OpsNew.ProgressionIndustryComponent" ? ProgressionIndustryComponent :
-  T extends "Model.OpsNew.RepairTrack" ? RepairTrack :
-  T extends "Model.OpsNew.TeamTrack" ? TeamTrack :
-  T extends "Model.OpsNew.TeleportLoadingIndustry" ? TeleportLoadingIndustry :
+  T extends "Model.Ops.FormulaicIndustryComponent" ? FormulaicIndustryComponent :
+  T extends "Model.Ops.IndustryLoader" ? IndustryLoader :
+  T extends "Model.Ops.IndustryUnLoader" ? IndustryUnLoader :
+  T extends "Model.Ops.Interchange" ? Interchange :
+  T extends "Model.Ops.InterchangedIndustryLoader" ? InterchangedIndustryLoader :
+  T extends "Model.Ops.ProgressionIndustryComponent" ? ProgressionIndustryComponent :
+  T extends "Model.Ops.RepairTrack" ? RepairTrack :
+  T extends "Model.Ops.TeamTrack" ? TeamTrack :
+  T extends "Model.Ops.TeleportLoadingIndustry" ? TeleportLoadingIndustry :
   never

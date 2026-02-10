@@ -2,11 +2,12 @@
   "manifestVersion": 1,
   "id": "AlinaNova21.MapEditor",
   "name": "Map Editor",
-  "version": "$(AssemblyVersion)",
+  "version": "VERSION_PLACEHOLDER",
   "assemblies": [ "MapEditor" ],
   "updateUrl": "https://railroader.alinanova.dev/update.json",
   "requires": [
-    "Zamu.StrangeCustoms"
+    "Zamu.StrangeCustoms",
+    { "id": "AlinaNova21.AlinasMapMod", "notBefore": "1.6.0.0" }
   ],
   "mixintos": {}
 }
